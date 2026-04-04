@@ -160,13 +160,13 @@ class DatabaseSeeder extends Seeder
         // Demo property coordinates (Sopot center)
         $property->update(['latitude' => 54.4416, 'longitude' => 18.5601]);
 
-        // Demo photos
+        // Demo photos (placeholder images)
         $photos = [
-            ['filename' => 'living-room.jpg', 'path' => 'properties/' . $property->id . '/living-room.jpg', 'alt_text_pl' => 'Salon', 'alt_text_en' => 'Living room', 'is_cover' => true, 'sort_order' => 0],
-            ['filename' => 'bedroom.jpg', 'path' => 'properties/' . $property->id . '/bedroom.jpg', 'alt_text_pl' => 'Sypialnia', 'alt_text_en' => 'Bedroom', 'is_cover' => false, 'sort_order' => 1],
-            ['filename' => 'kitchen.jpg', 'path' => 'properties/' . $property->id . '/kitchen.jpg', 'alt_text_pl' => 'Kuchnia', 'alt_text_en' => 'Kitchen', 'is_cover' => false, 'sort_order' => 2],
-            ['filename' => 'bathroom.jpg', 'path' => 'properties/' . $property->id . '/bathroom.jpg', 'alt_text_pl' => 'Lazienka', 'alt_text_en' => 'Bathroom', 'is_cover' => false, 'sort_order' => 3],
-            ['filename' => 'balcony.jpg', 'path' => 'properties/' . $property->id . '/balcony.jpg', 'alt_text_pl' => 'Balkon z widokiem', 'alt_text_en' => 'Balcony with view', 'is_cover' => false, 'sort_order' => 4],
+            ['filename' => 'living-room.jpg', 'path' => 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop', 'alt_text_pl' => 'Salon', 'alt_text_en' => 'Living room', 'is_cover' => true, 'sort_order' => 0],
+            ['filename' => 'bedroom.jpg', 'path' => 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&h=600&fit=crop', 'alt_text_pl' => 'Sypialnia', 'alt_text_en' => 'Bedroom', 'is_cover' => false, 'sort_order' => 1],
+            ['filename' => 'kitchen.jpg', 'path' => 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&h=600&fit=crop', 'alt_text_pl' => 'Kuchnia', 'alt_text_en' => 'Kitchen', 'is_cover' => false, 'sort_order' => 2],
+            ['filename' => 'bathroom.jpg', 'path' => 'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=800&h=600&fit=crop', 'alt_text_pl' => 'Lazienka', 'alt_text_en' => 'Bathroom', 'is_cover' => false, 'sort_order' => 3],
+            ['filename' => 'balcony.jpg', 'path' => 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=600&fit=crop', 'alt_text_pl' => 'Balkon z widokiem', 'alt_text_en' => 'Balcony with view', 'is_cover' => false, 'sort_order' => 4],
         ];
         foreach ($photos as $p) {
             Photo::updateOrCreate(

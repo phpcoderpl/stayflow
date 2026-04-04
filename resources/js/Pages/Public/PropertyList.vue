@@ -36,6 +36,7 @@ function formatPrice(cents) {
 function photoUrl(photo) {
     if (!photo) return '';
     if (photo.url) return photo.url;
+    if (photo.path && photo.path.startsWith('http')) return photo.path;
     if (photo.path) return `/storage/${photo.path}`;
     return '';
 }
