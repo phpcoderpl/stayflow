@@ -565,7 +565,7 @@ const formatPrice = (grosze) => {
                             class="relative group rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700"
                         >
                             <img
-                                :src="`/storage/${photo.path}`"
+                                :src="photo.path.startsWith('http') ? photo.path : `/storage/${photo.path}`"
                                 :alt="photo.filename"
                                 class="w-full h-32 object-cover"
                             />

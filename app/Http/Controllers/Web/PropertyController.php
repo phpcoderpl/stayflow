@@ -21,7 +21,7 @@ class PropertyController extends Controller
             ->get()
             ->each(function ($p) {
                 $cover = $p->photos->first();
-                $p->cover_photo_url = $cover ? '/storage/' . $cover->path : null;
+                $p->cover_photo_url = $cover ? (str_starts_with($cover->path, 'http') ? $cover->path : '/storage/' . $cover->path) : null;
                 unset($p->photos);
             });
 
