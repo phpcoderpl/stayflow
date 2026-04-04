@@ -9,9 +9,8 @@ cmds = [
 
 [phases.build]
 cmds = [
-    "npm run build",
-    "mkdir -p /var/data",
-    "touch /var/data/database.sqlite",
-    "php artisan migrate --force",
-    "php artisan db:seed --force"
+    "npm run build"
 ]
+
+[start]
+cmd = "bash start.sh"

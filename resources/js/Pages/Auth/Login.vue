@@ -97,14 +97,6 @@ const submit = () => {
                     </button>
                 </form>
             </div>
-
-            <!-- Register link -->
-            <p class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-                {{ t('auth.noAccount') }}
-                <Link href="/register" class="font-medium text-sky-600 hover:text-sky-500 dark:text-sky-400 dark:hover:text-sky-300">
-                    {{ t('auth.registerBtn') }}
-                </Link>
-            </p>
         </div>
     </div>
 </template>
