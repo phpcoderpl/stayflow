@@ -78,7 +78,7 @@ const hotpayNotifyUrl = baseUrl + '/hotpay/notify';
 const stripeWebhookUrl = baseUrl + '/stripe/webhook';
 
 // Contact photo upload
-const contactPhotoUrl = ref(props.settings.contact_photo ? `/storage/${props.settings.contact_photo}` : null);
+const contactPhotoUrl = ref(props.settings.contact_photo ? (props.settings.contact_photo.startsWith('http') ? props.settings.contact_photo : `/storage/${props.settings.contact_photo}`) : null);
 
 function uploadContactPhoto(event) {
     const file = event.target.files[0];

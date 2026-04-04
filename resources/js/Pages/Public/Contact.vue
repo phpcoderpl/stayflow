@@ -18,6 +18,7 @@ const description = computed(() => {
 
 const photoUrl = computed(() => {
     if (!props.contact.photo) return null;
+    if (props.contact.photo.startsWith('http')) return props.contact.photo;
     return `/storage/${props.contact.photo}`;
 });
 
