@@ -1,10 +1,14 @@
 <?php
 
+use App\Http\Controllers\Public\GuestPortalController;
+use App\Http\Controllers\Public\PublicBookingController;
+use App\Http\Controllers\Public\PublicPropertyController;
 use App\Http\Controllers\Web\AuthController;
 use App\Http\Controllers\Web\BlockedDateController;
 use App\Http\Controllers\Web\BookingController;
 use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\GuestController;
+use App\Http\Controllers\Web\PayUController;
 use App\Http\Controllers\Web\PropertyController;
 use App\Http\Controllers\Web\SeasonalPriceController;
 use Illuminate\Support\Facades\Route;
@@ -20,7 +24,24 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth');
 
 // Redirect root
-Route::get('/', fn() => redirect('/login'));
+Route::get('/', fn() => redirect('/properties'));
+
+// Public property pages (no auth)
+Route::get('/properties', [PublicPropertyController::class, 'index']);
+Route::get('/properties/{slug}', [PublicPropertyController::class, 'show']);
+
+// Booking flow (no auth)
+Route::post('/bookings/check-availability', [PublicBookingController::class, 'checkAvailability']);
+Route::post('/bookings', [PublicBookingController::class, 'store']);
+Route::get('/booking/{confirmationCode}/pay', [PublicBookingController::class, 'pay']);
+Route::get('/booking/{confirmationCode}/confirmation', [PublicBookingController::class, 'confirmation']);
+
+// Guest portal (no auth)
+Route::get('/guest/{token}', [GuestPortalController::class, 'show']);
+
+// PayU (no auth, CSRF exempt for notify)
+Route::post('/payu/checkout', [PayUController::class, 'checkout']);
+Route::post('/payu/notify', [PayUController::class, 'notify']);
 
 // Admin routes
 Route::prefix('admin')->middleware('auth')->group(function () {
