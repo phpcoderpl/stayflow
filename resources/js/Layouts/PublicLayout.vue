@@ -9,6 +9,7 @@ const page = usePage();
 const brandName = computed(() => page.props.brandName || 'StayFlow');
 
 const isDark = ref(false);
+const mobileMenu = ref(false);
 
 onMounted(() => {
     isDark.value = localStorage.getItem('stayflow_dark') === 'true';
@@ -51,8 +52,41 @@ function toggleLocale() {
                     <span class="text-lg font-bold text-gray-900 dark:text-white">{{ brandName }}</span>
                 </Link>
 
+                <!-- Navigation links -->
+                <nav class="hidden sm:flex items-center gap-1">
+                    <Link href="/" class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                        {{ locale === 'pl' ? 'Oferta' : 'Properties' }}
+                    </Link>
+                    <Link href="/contact" class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                        {{ locale === 'pl' ? 'Kontakt' : 'Contact' }}
+                    </Link>
+                    <Link href="/terms" class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                        {{ locale === 'pl' ? 'Regulamin' : 'Terms' }}
+                    </Link>
+                </nav>
+
                 <!-- Right controls -->
                 <div class="flex items-center gap-1.5">
+                    <!-- Mobile menu -->
+                    <div class="sm:hidden relative">
+                        <button @click="mobileMenu = !mobileMenu" class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                            </svg>
+                        </button>
+                        <div v-if="mobileMenu" class="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg py-2 z-50">
+                            <Link href="/" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800" @click="mobileMenu = false">
+                                {{ locale === 'pl' ? 'Oferta' : 'Properties' }}
+                            </Link>
+                            <Link href="/contact" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800" @click="mobileMenu = false">
+                                {{ locale === 'pl' ? 'Kontakt' : 'Contact' }}
+                            </Link>
+                            <Link href="/terms" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800" @click="mobileMenu = false">
+                                {{ locale === 'pl' ? 'Regulamin' : 'Terms' }}
+                            </Link>
+                        </div>
+                    </div>
+
                     <!-- Locale toggle -->
                     <button
                         @click="toggleLocale"

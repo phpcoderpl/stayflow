@@ -8,6 +8,7 @@ use App\Models\Setting;
 use App\Services\AvailabilityService;
 use App\Services\PricingService;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class PublicPropertyController extends Controller
@@ -15,7 +16,7 @@ class PublicPropertyController extends Controller
     public function index()
     {
         $properties = Property::where('is_published', true)
-            ->with(['photos' => fn($q) => $q->where('is_cover', true), 'amenities'])
+            ->with(['photos' => fn($q) => $q->orderBy('sort_order'), 'amenities'])
             ->orderBy('sort_order')
             ->get();
 
@@ -37,10 +38,32 @@ class PublicPropertyController extends Controller
         $end = Carbon::now()->addMonths(2)->endOfMonth()->toDateString();
         $unavailableDates = AvailabilityService::getUnavailableDates($property, $start, $end);
 
+        $brandName = Setting::get('brand_name', 'StayFlow');
+        $coverPhoto = $property->photos->first();
+
         return Inertia::render('Public/PropertyDetail', [
             'property' => $property,
             'unavailableDates' => $unavailableDates,
-            'brandName' => Setting::get('brand_name', 'StayFlow'),
+            'brandName' => $brandName,
+            'meta' => [
+                'title' => $property->name . ' — ' . $brandName,
+                'description' => Str::limit(strip_tags($property->description_pl), 160),
+                'image' => $coverPhoto?->path ? url('storage/' . $coverPhoto->path) : null,
+            ],
+            'schema' => [
+                '@context' => 'https://schema.org',
+                '@type' => 'LodgingBusiness',
+                'name' => $property->name,
+                'description' => $property->description_pl,
+                'address' => [
+                    '@type' => 'PostalAddress',
+                    'streetAddress' => $property->address,
+                    'addressLocality' => $property->city,
+                    'addressCountry' => 'PL',
+                ],
+                'priceRange' => number_format($property->base_price_per_night / 100, 2) . ' PLN',
+                'image' => $coverPhoto?->path ? url('storage/' . $coverPhoto->path) : null,
+            ],
         ]);
     }
 }

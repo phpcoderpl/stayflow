@@ -26,6 +26,11 @@ const formatPrice = (grosze) => {
     return (grosze / 100).toFixed(2) + ' PLN';
 };
 
+const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    return dateStr.substring(0, 10);
+};
+
 const statuses = [
     'pending',
     'confirmed',
@@ -102,11 +107,11 @@ const paymentStatusBadgeClass = (status) => {
                         </div>
                         <div class="flex justify-between">
                             <dt class="text-sm text-gray-500 dark:text-gray-400">{{ t('bookings.checkIn') }}</dt>
-                            <dd class="text-sm font-medium text-gray-900 dark:text-white">{{ booking.check_in }}</dd>
+                            <dd class="text-sm font-medium text-gray-900 dark:text-white">{{ formatDate(booking.check_in) }}</dd>
                         </div>
                         <div class="flex justify-between">
                             <dt class="text-sm text-gray-500 dark:text-gray-400">{{ t('bookings.checkOut') }}</dt>
-                            <dd class="text-sm font-medium text-gray-900 dark:text-white">{{ booking.check_out }}</dd>
+                            <dd class="text-sm font-medium text-gray-900 dark:text-white">{{ formatDate(booking.check_out) }}</dd>
                         </div>
                         <div class="flex justify-between">
                             <dt class="text-sm text-gray-500 dark:text-gray-400">{{ t('bookings.nights') }}</dt>

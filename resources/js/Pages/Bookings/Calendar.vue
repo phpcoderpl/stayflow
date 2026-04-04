@@ -28,7 +28,7 @@ function filterByProperty() {
     const params = {};
     if (selectedPropertyFilter.value) params.property_id = selectedPropertyFilter.value;
     params.month = currentMonth.value.toISOString().slice(0, 7);
-    router.get('/admin/calendar', params, { preserveState: true, replace: true });
+    router.get('/admin/bookings/calendar', params, { preserveState: true, replace: true });
 }
 
 function prevMonth() {
@@ -49,7 +49,7 @@ function navigateMonth() {
     const params = {};
     if (selectedPropertyFilter.value) params.property_id = selectedPropertyFilter.value;
     params.month = currentMonth.value.toISOString().slice(0, 7);
-    router.get('/admin/calendar', params, { preserveState: true, replace: true });
+    router.get('/admin/bookings/calendar', params, { preserveState: true, replace: true });
 }
 
 const monthLabel = computed(() => {
@@ -103,17 +103,22 @@ const calendarGrid = computed(() => {
     return weeks;
 });
 
+function toDate(d) {
+    if (!d) return '';
+    return d.substring(0, 10);
+}
+
 function getBookingsForDate(dateStr) {
     if (!props.bookings) return [];
     return props.bookings.filter(b => {
-        return dateStr >= b.check_in && dateStr < b.check_out;
+        return dateStr >= toDate(b.check_in) && dateStr < toDate(b.check_out);
     });
 }
 
 function isBlocked(dateStr) {
     if (!props.blockedDates) return false;
     return props.blockedDates.some(bd => {
-        return dateStr >= bd.date_from && dateStr <= bd.date_to;
+        return dateStr >= toDate(bd.date_from) && dateStr <= toDate(bd.date_to);
     });
 }
 

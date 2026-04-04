@@ -11,15 +11,19 @@ const props = defineProps({
     properties: Array,
     calendarSyncs: Array,
     emailTemplates: Array,
+    widgets: Array,
 });
 
 const activeTab = ref('general');
 
 const tabs = [
     { key: 'general', label: 'settings.tabs.general' },
+    { key: 'contact', label: 'settings.tabs.contact' },
+    { key: 'terms', label: 'settings.tabs.terms' },
     { key: 'integrations', label: 'settings.tabs.integrations' },
     { key: 'email', label: 'settings.tabs.email' },
     { key: 'seo', label: 'settings.tabs.seo' },
+    { key: 'widgets', label: 'settings.tabs.widgets' },
 ];
 
 // General / SEO form
@@ -31,7 +35,30 @@ const generalForm = useForm({
     google_analytics_id: props.settings.google_analytics_id ?? '',
     pre_arrival_days: props.settings.pre_arrival_days ?? 1,
     post_stay_days: props.settings.post_stay_days ?? 1,
+    contact_name: props.settings.contact_name ?? '',
+    contact_email: props.settings.contact_email ?? '',
+    contact_phone: props.settings.contact_phone ?? '',
+    contact_address: props.settings.contact_address ?? '',
+    contact_description_pl: props.settings.contact_description_pl ?? '',
+    contact_description_en: props.settings.contact_description_en ?? '',
+    terms_pl: props.settings.terms_pl ?? '',
+    terms_en: props.settings.terms_en ?? '',
 });
+
+// Contact photo upload
+const contactPhotoUrl = ref(props.settings.contact_photo ? `/storage/${props.settings.contact_photo}` : null);
+
+function uploadContactPhoto(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('photo', file);
+    router.post('/admin/settings/contact-photo', formData, {
+        onSuccess: () => {
+            contactPhotoUrl.value = URL.createObjectURL(file);
+        },
+    });
+}
 
 function saveGeneral() {
     generalForm.put('/admin/settings');
@@ -85,6 +112,34 @@ props.emailTemplates.forEach((tpl) => {
 
 function saveTemplate(id) {
     templateForms[id].put('/admin/settings/email-templates/' + id);
+}
+
+// Widgets
+const widgetForm = useForm({
+    property_id: '',
+    type: '',
+    name: '',
+});
+
+function addWidget() {
+    widgetForm.post('/admin/widgets', {
+        onSuccess: () => widgetForm.reset(),
+    });
+}
+
+function deleteWidget(id) {
+    if (confirm(t('widgets.delete_confirm'))) {
+        router.delete('/admin/widgets/' + id);
+    }
+}
+
+function copyEmbedCode(code) {
+    navigator.clipboard.writeText(code);
+    // Show brief success feedback (you can expand this with a toast)
+}
+
+function getWidgetTypeName(type) {
+    return t(`widgets.${type}`);
 }
 </script>
 
@@ -178,6 +233,135 @@ function saveTemplate(id) {
                         <span v-if="generalForm.recentlySuccessful" class="ml-3 text-sm text-green-600 dark:text-green-400">{{ $t('settings.saved') }}</span>
                     </div>
                 </form>
+            </div>
+
+            <!-- Contact Tab -->
+            <div v-show="activeTab === 'contact'">
+                <div class="space-y-6 max-w-2xl">
+                    <!-- Profile photo -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{{ $t('settings.contact_photo') }}</label>
+                        <div class="flex items-center gap-4">
+                            <div v-if="contactPhotoUrl" class="w-20 h-20 rounded-xl overflow-hidden">
+                                <img :src="contactPhotoUrl" alt="Profile" class="w-full h-full object-cover" />
+                            </div>
+                            <div v-else class="w-20 h-20 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                                </svg>
+                            </div>
+                            <label class="cursor-pointer inline-flex items-center px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                                {{ $t('settings.upload_photo') }}
+                                <input type="file" accept="image/*" class="hidden" @change="uploadContactPhoto" />
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.contact_name') }}</label>
+                        <input
+                            v-model="generalForm.contact_name"
+                            type="text"
+                            :placeholder="$t('settings.contact_name_placeholder')"
+                            class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                        />
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.contact_email') }}</label>
+                            <input
+                                v-model="generalForm.contact_email"
+                                type="email"
+                                class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.contact_phone') }}</label>
+                            <input
+                                v-model="generalForm.contact_phone"
+                                type="tel"
+                                placeholder="+48 ..."
+                                class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.contact_address') }}</label>
+                        <input
+                            v-model="generalForm.contact_address"
+                            type="text"
+                            class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                        />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.contact_description_pl') }}</label>
+                        <textarea
+                            v-model="generalForm.contact_description_pl"
+                            rows="3"
+                            :placeholder="$t('settings.contact_description_placeholder')"
+                            class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                        />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.contact_description_en') }}</label>
+                        <textarea
+                            v-model="generalForm.contact_description_en"
+                            rows="3"
+                            class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                        />
+                    </div>
+
+                    <div class="pt-4">
+                        <button
+                            @click="saveGeneral"
+                            :disabled="generalForm.processing"
+                            class="inline-flex items-center px-5 py-2.5 rounded-lg bg-sky-500 hover:bg-sky-600 text-white text-sm font-medium transition disabled:opacity-50"
+                        >
+                            {{ $t('settings.save') }}
+                        </button>
+                        <span v-if="generalForm.recentlySuccessful" class="ml-3 text-sm text-green-600 dark:text-green-400">{{ $t('settings.saved') }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Terms Tab -->
+            <div v-show="activeTab === 'terms'">
+                <div class="space-y-6 max-w-3xl">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                        {{ $t('settings.terms_info') }}
+                    </p>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.terms_pl') }}</label>
+                        <textarea
+                            v-model="generalForm.terms_pl"
+                            rows="15"
+                            class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition font-mono"
+                        />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.terms_en') }}</label>
+                        <textarea
+                            v-model="generalForm.terms_en"
+                            rows="15"
+                            class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition font-mono"
+                        />
+                    </div>
+
+                    <div class="pt-4">
+                        <button
+                            @click="saveGeneral"
+                            :disabled="generalForm.processing"
+                            class="inline-flex items-center px-5 py-2.5 rounded-lg bg-sky-500 hover:bg-sky-600 text-white text-sm font-medium transition disabled:opacity-50"
+                        >
+                            {{ $t('settings.save') }}
+                        </button>
+                        <span v-if="generalForm.recentlySuccessful" class="ml-3 text-sm text-green-600 dark:text-green-400">{{ $t('settings.saved') }}</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Integrations Tab -->
@@ -442,6 +626,117 @@ function saveTemplate(id) {
                         <span v-if="generalForm.recentlySuccessful" class="ml-3 text-sm text-green-600 dark:text-green-400">{{ $t('settings.saved') }}</span>
                     </div>
                 </form>
+            </div>
+
+            <!-- Widgets Tab -->
+            <div v-show="activeTab === 'widgets'">
+                <div class="max-w-4xl space-y-8">
+                    <!-- Existing widgets -->
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $t('widgets.title') }}</h2>
+
+                        <div v-if="widgets.length === 0" class="text-sm text-gray-500 dark:text-gray-400 py-4">
+                            {{ $t('widgets.no_widgets') }}
+                        </div>
+
+                        <div class="space-y-3">
+                            <div
+                                v-for="widget in widgets"
+                                :key="widget.id"
+                                class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4"
+                            >
+                                <div class="space-y-3">
+                                    <div class="flex flex-wrap items-start justify-between gap-3">
+                                        <div class="space-y-1 min-w-0 flex-1">
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-sm font-medium text-gray-900 dark:text-white">{{ widget.name }}</span>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300">
+                                                    {{ getWidgetTypeName(widget.type) }}
+                                                </span>
+                                            </div>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ widget.property?.name || $t('settings.unknown_property') }}</p>
+                                        </div>
+                                        <button
+                                            @click="deleteWidget(widget.id)"
+                                            class="shrink-0 p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
+                                        >
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('widgets.embed_code') }}</label>
+                                        <div class="relative">
+                                            <textarea
+                                                :value="widget.embed_code"
+                                                readonly
+                                                rows="3"
+                                                class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 px-3 py-2 text-xs text-gray-900 dark:text-white font-mono"
+                                            />
+                                            <button
+                                                @click="copyEmbedCode(widget.embed_code)"
+                                                class="absolute top-2 right-2 px-3 py-1.5 rounded bg-sky-500 hover:bg-sky-600 text-white text-xs font-medium transition"
+                                            >
+                                                {{ $t('widgets.copy_code') }}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add new widget -->
+                    <div>
+                        <h3 class="text-md font-semibold text-gray-900 dark:text-white mb-3">{{ $t('widgets.add') }}</h3>
+                        <form @submit.prevent="addWidget" class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('widgets.property') }}</label>
+                                    <select
+                                        v-model="widgetForm.property_id"
+                                        class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                                    >
+                                        <option value="">{{ $t('settings.select_property') }}</option>
+                                        <option v-for="prop in properties" :key="prop.id" :value="prop.id">{{ prop.name }}</option>
+                                    </select>
+                                    <p v-if="widgetForm.errors.property_id" class="mt-1 text-sm text-red-500">{{ widgetForm.errors.property_id }}</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('widgets.type') }}</label>
+                                    <select
+                                        v-model="widgetForm.type"
+                                        class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                                    >
+                                        <option value="">{{ $t('app.select') }}</option>
+                                        <option value="calendar">{{ $t('widgets.calendar') }}</option>
+                                        <option value="booking_form">{{ $t('widgets.booking_form') }}</option>
+                                        <option value="showcase">{{ $t('widgets.showcase') }}</option>
+                                    </select>
+                                    <p v-if="widgetForm.errors.type" class="mt-1 text-sm text-red-500">{{ widgetForm.errors.type }}</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('widgets.name') }}</label>
+                                    <input
+                                        v-model="widgetForm.name"
+                                        type="text"
+                                        :placeholder="$t('widgets.name')"
+                                        class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                                    />
+                                    <p v-if="widgetForm.errors.name" class="mt-1 text-sm text-red-500">{{ widgetForm.errors.name }}</p>
+                                </div>
+                            </div>
+                            <button
+                                type="submit"
+                                :disabled="widgetForm.processing"
+                                class="inline-flex items-center px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-600 text-white text-sm font-medium transition disabled:opacity-50"
+                            >
+                                {{ $t('widgets.add') }}
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     </AdminLayout>

@@ -55,11 +55,12 @@ function logout() {
 const navItems = computed(() => [
     { label: t('app.dashboard'), href: '/admin/dashboard', icon: 'home' },
     { label: t('app.properties'), href: '/admin/properties', icon: 'building' },
+    { label: t('app.import'), href: '/admin/import', icon: 'download' },
     { label: t('app.bookings'), href: '/admin/bookings', icon: 'calendar' },
     { label: t('app.guests'), href: '/admin/guests', icon: 'users' },
-    { label: t('app.calendar'), href: '/admin/calendar', icon: 'calendar-days' },
-    { label: t('app.settings'), href: '/admin/settings', icon: 'cog' },
+    { label: t('app.calendar'), href: '/admin/bookings/calendar', icon: 'calendar-days' },
     { label: t('app.reports'), href: '/admin/reports', icon: 'chart' },
+    { label: t('app.settings'), href: '/admin/settings', icon: 'cog' },
 ]);
 
 function isActive(href) {
@@ -123,6 +124,10 @@ function toggleSidebar() {
                     <!-- Building icon -->
                     <svg v-if="item.icon === 'building'" class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
+                    </svg>
+                    <!-- Download icon -->
+                    <svg v-if="item.icon === 'download'" class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                     </svg>
                     <!-- Calendar icon -->
                     <svg v-if="item.icon === 'calendar'" class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">

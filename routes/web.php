@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Public\GuestPortalController;
+use App\Http\Controllers\Public\PublicPageController;
 use App\Http\Controllers\Public\PublicBookingController;
 use App\Http\Controllers\Public\PublicPropertyController;
 use App\Http\Controllers\Web\AuthController;
@@ -8,12 +9,17 @@ use App\Http\Controllers\Web\BlockedDateController;
 use App\Http\Controllers\Web\BookingController;
 use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\GuestController;
+use App\Http\Controllers\Web\ImportController;
 use App\Http\Controllers\Web\PayUController;
 use App\Http\Controllers\Web\PropertyController;
+use App\Http\Controllers\Web\ReportsController;
 use App\Http\Controllers\Web\SeasonalPriceController;
 use App\Http\Controllers\Web\SettingsController;
+use App\Http\Controllers\Web\WidgetController;
 use App\Http\Controllers\Api\AvailabilityController;
 use App\Http\Controllers\Api\ICalController;
+use App\Http\Controllers\Api\SitemapController;
+use App\Http\Controllers\Api\WidgetController as ApiWidgetController;
 use Illuminate\Support\Facades\Route;
 
 // Guest routes
@@ -26,12 +32,14 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth');
 
-// Redirect root
-Route::get('/', fn() => redirect('/properties'));
-
 // Public property pages (no auth)
+Route::get('/', [PublicPropertyController::class, 'index']);
 Route::get('/properties', [PublicPropertyController::class, 'index']);
 Route::get('/properties/{slug}', [PublicPropertyController::class, 'show']);
+
+// Public pages (no auth)
+Route::get('/contact', [PublicPageController::class, 'contact']);
+Route::get('/terms', [PublicPageController::class, 'terms']);
 
 // Booking flow (no auth)
 Route::post('/bookings/check-availability', [PublicBookingController::class, 'checkAvailability']);
@@ -50,6 +58,12 @@ Route::post('/payu/notify', [PayUController::class, 'notify']);
 Route::get('/ical/{token}.ics', [ICalController::class, 'export']);
 Route::get('/booking/{confirmationCode}/calendar.ics', [ICalController::class, 'guestIcs']);
 
+// Sitemap (no auth)
+Route::get('/sitemap.xml', [SitemapController::class, 'index']);
+
+// Widget embed (no auth)
+Route::get('/widget/{widget}', [ApiWidgetController::class, 'render']);
+
 // Public API
 Route::get('/api/properties/{propertyId}/availability', [AvailabilityController::class, 'index']);
 
@@ -63,6 +77,12 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/properties/{property}/edit', [PropertyController::class, 'edit']);
     Route::put('/properties/{property}', [PropertyController::class, 'update']);
     Route::delete('/properties/{property}', [PropertyController::class, 'destroy']);
+
+    Route::get('/import', [ImportController::class, 'index']);
+    Route::post('/import/scrape', [ImportController::class, 'scrape']);
+    Route::post('/import/parse-html', [ImportController::class, 'parseHtml']);
+    Route::post('/import/bookmarklet', [ImportController::class, 'bookmarklet']);
+    Route::post('/import', [ImportController::class, 'import']);
 
     Route::post('/properties/{property}/photos', [PropertyController::class, 'uploadPhotos']);
     Route::delete('/properties/{property}/photos/{photo}', [PropertyController::class, 'deletePhoto']);
@@ -90,4 +110,11 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('/settings/calendar-sync', [SettingsController::class, 'createCalendarSync']);
     Route::delete('/settings/calendar-sync/{calendarSync}', [SettingsController::class, 'deleteCalendarSync']);
     Route::put('/settings/email-templates/{emailTemplate}', [SettingsController::class, 'updateEmailTemplate']);
+    Route::post('/settings/contact-photo', [SettingsController::class, 'uploadContactPhoto']);
+
+    Route::get('/widgets', [WidgetController::class, 'index']);
+    Route::post('/widgets', [WidgetController::class, 'store']);
+    Route::delete('/widgets/{widget}', [WidgetController::class, 'destroy']);
+
+    Route::get('/reports', [ReportsController::class, 'index']);
 });

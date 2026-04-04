@@ -157,9 +157,43 @@ class DatabaseSeeder extends Seeder
             'reservations_enabled' => true,
         ]);
 
+        // Demo property coordinates (Sopot center)
+        $property->update(['latitude' => 54.4416, 'longitude' => 18.5601]);
+
+        // Demo photos
+        $photos = [
+            ['filename' => 'living-room.jpg', 'path' => 'properties/' . $property->id . '/living-room.jpg', 'alt_text_pl' => 'Salon', 'alt_text_en' => 'Living room', 'is_cover' => true, 'sort_order' => 0],
+            ['filename' => 'bedroom.jpg', 'path' => 'properties/' . $property->id . '/bedroom.jpg', 'alt_text_pl' => 'Sypialnia', 'alt_text_en' => 'Bedroom', 'is_cover' => false, 'sort_order' => 1],
+            ['filename' => 'kitchen.jpg', 'path' => 'properties/' . $property->id . '/kitchen.jpg', 'alt_text_pl' => 'Kuchnia', 'alt_text_en' => 'Kitchen', 'is_cover' => false, 'sort_order' => 2],
+            ['filename' => 'bathroom.jpg', 'path' => 'properties/' . $property->id . '/bathroom.jpg', 'alt_text_pl' => 'Lazienka', 'alt_text_en' => 'Bathroom', 'is_cover' => false, 'sort_order' => 3],
+            ['filename' => 'balcony.jpg', 'path' => 'properties/' . $property->id . '/balcony.jpg', 'alt_text_pl' => 'Balkon z widokiem', 'alt_text_en' => 'Balcony with view', 'is_cover' => false, 'sort_order' => 4],
+        ];
+        foreach ($photos as $p) {
+            Photo::updateOrCreate(
+                ['property_id' => $property->id, 'filename' => $p['filename']],
+                [...$p, 'property_id' => $property->id]
+            );
+        }
+
         // Attach amenities to demo property
         $amenitySlugs = ['wifi', 'parking', 'ac', 'kitchen', 'washer', 'tv', 'balcony', 'coffee_maker', 'towels', 'bed_linen', 'hair_dryer', 'iron'];
         $amenityIds = Amenity::whereIn('slug', $amenitySlugs)->pluck('id');
         $property->amenities()->sync($amenityIds);
+
+        // Contact details
+        $contactSettings = [
+            'contact_name' => 'Anna Kowalska',
+            'contact_email' => 'kontakt@apartament-sopot.pl',
+            'contact_phone' => '+48 500 123 456',
+            'contact_address' => 'ul. Morska 15/3, 81-735 Sopot',
+            'contact_photo' => 'contact/profile.jpg',
+            'contact_description_pl' => "Witam serdecznie!\n\nJestem Anna — wlascicielka Apartamentu Slonecznego w Sopocie. Od ponad 5 lat goszcze turystow z calego swiata w moim apartamencie, ktory z miloscia urzadzilam i stale udoskonalam.\n\nDbam o kazdy szczegol — od swiezej poscieli po lokalne rekomendacje restauracji i atrakcji. Zalezy mi, abys czul sie jak w domu.\n\nJesli masz jakiekolwiek pytania dotyczace rezerwacji lub pobytu — pisz lub dzwon smalo!",
+            'contact_description_en' => "Welcome!\n\nI'm Anna — the owner of Apartament Sloneczny in Sopot. For over 5 years I've been hosting tourists from around the world in my apartment, which I have lovingly furnished and constantly improve.\n\nI pay attention to every detail — from fresh linens to local restaurant and attraction recommendations. I want you to feel right at home.\n\nIf you have any questions about your reservation or stay — feel free to write or call!",
+            'terms_pl' => "REGULAMIN REZERWACJI — Apartament Sloneczny, Sopot\n\n1. REZERWACJA I PLATNOSCI\n1.1. Rezerwacja jest potwierdzona po wplacie zaliczki w wysokosci 30% calkowitej kwoty pobytu.\n1.2. Pozostala czesc nalezy uregulowac najpozniej w dniu zameldowania.\n1.3. Platnosci przyjmujemy przez system PayU (BLIK, karta, przelew) lub gotowka.\n\n2. ZAMELDOWANIE I WYMELDOWANIE\n2.1. Zameldowanie: od godziny 15:00.\n2.2. Wymeldowanie: do godziny 11:00.\n2.3. Wczesniejsze zameldowanie lub pozniejsze wymeldowanie — mozliwe po uzgodnieniu i w zaleznosci od dostepnosci.\n\n3. ANULOWANIE\n3.1. Bezplatne anulowanie do 7 dni przed data przyjazdu — zwrot 100% zaliczki.\n3.2. Anulowanie 3-7 dni przed przyjazdem — zwrot 50% zaliczki.\n3.3. Anulowanie ponizej 3 dni przed przyjazdem — zaliczka nie podlega zwrotowi.\n\n4. ZASADY POBYTU\n4.1. Cisza nocna obowiazuje od 22:00 do 7:00.\n4.2. W apartamencie obowiazuje calkowity zakaz palenia.\n4.3. Zwierzeta domowe sa akceptowane po wczesniejszym uzgodnieniu (oplata dodatkowa 50 PLN/noc).\n4.4. Maksymalna liczba gosci: 4 osoby.\n4.5. Organizowanie imprez i przyjec jest niedozwolone.\n\n5. ODPOWIEDZIALNOSC\n5.1. Gosc ponosi odpowiedzialnosc za wszelkie szkody powstale w apartamencie podczas pobytu.\n5.2. Wlasciciel nie ponosi odpowiedzialnosci za rzeczy pozostawione w apartamencie.\n\n6. DANE OSOBOWE\n6.1. Dane osobowe sa przetwarzane wylacznie w celu realizacji rezerwacji, zgodnie z RODO.\n6.2. Dane nie sa udostepniane podmiotom trzecim.\n\nKontakt: kontakt@apartament-sopot.pl | +48 500 123 456",
+            'terms_en' => "BOOKING TERMS & CONDITIONS — Apartament Sloneczny, Sopot\n\n1. BOOKING & PAYMENTS\n1.1. A booking is confirmed upon payment of a 30% deposit of the total stay amount.\n1.2. The remaining balance must be paid no later than the check-in day.\n1.3. We accept payments via PayU (BLIK, card, bank transfer) or cash.\n\n2. CHECK-IN & CHECK-OUT\n2.1. Check-in: from 3:00 PM.\n2.2. Check-out: by 11:00 AM.\n2.3. Early check-in or late check-out — possible upon request and subject to availability.\n\n3. CANCELLATION\n3.1. Free cancellation up to 7 days before arrival — 100% deposit refund.\n3.2. Cancellation 3-7 days before arrival — 50% deposit refund.\n3.3. Cancellation less than 3 days before arrival — deposit is non-refundable.\n\n4. HOUSE RULES\n4.1. Quiet hours: 10:00 PM to 7:00 AM.\n4.2. The apartment is strictly non-smoking.\n4.3. Pets are welcome upon prior arrangement (additional fee of 50 PLN/night).\n4.4. Maximum occupancy: 4 guests.\n4.5. Parties and events are not permitted.\n\n5. LIABILITY\n5.1. Guests are responsible for any damage caused during their stay.\n5.2. The owner is not responsible for belongings left in the apartment.\n\n6. PERSONAL DATA\n6.1. Personal data is processed solely for booking purposes, in compliance with GDPR.\n6.2. Data is not shared with third parties.\n\nContact: kontakt@apartament-sopot.pl | +48 500 123 456",
+        ];
+        foreach ($contactSettings as $key => $value) {
+            Setting::set($key, $value);
+        }
     }
 }

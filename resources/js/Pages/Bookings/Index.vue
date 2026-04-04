@@ -40,6 +40,11 @@ const formatPrice = (grosze) => {
     return (grosze / 100).toFixed(2) + ' PLN';
 };
 
+const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    return dateStr.substring(0, 10);
+};
+
 function applyFilters() {
     const params = {};
     if (statusFilter.value) params.status = statusFilter.value;
@@ -169,10 +174,10 @@ watch([statusFilter, propertyFilter], () => {
                                     {{ booking.property?.name }}
                                 </td>
                                 <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                    {{ booking.check_in }}
+                                    {{ formatDate(booking.check_in) }}
                                 </td>
                                 <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                    {{ booking.check_out }}
+                                    {{ formatDate(booking.check_out) }}
                                 </td>
                                 <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                                     {{ booking.nights }}

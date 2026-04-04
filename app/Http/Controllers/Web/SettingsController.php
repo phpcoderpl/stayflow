@@ -7,8 +7,10 @@ use App\Models\CalendarSync;
 use App\Models\EmailTemplate;
 use App\Models\Property;
 use App\Models\Setting;
+use App\Models\Widget;
 use App\Services\ICalService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
@@ -19,6 +21,7 @@ class SettingsController extends Controller
         $properties = Property::orderBy('name')->get(['id', 'name']);
         $calendarSyncs = CalendarSync::with('property')->get();
         $emailTemplates = EmailTemplate::orderBy('name')->get();
+        $widgets = Widget::with('property')->get();
 
         return Inertia::render('Settings/Index', [
             'settings' => [
@@ -29,10 +32,20 @@ class SettingsController extends Controller
                 'admin_email' => Setting::get('admin_email', ''),
                 'pre_arrival_days' => Setting::get('pre_arrival_days', '3'),
                 'post_stay_days' => Setting::get('post_stay_days', '1'),
+                'contact_name' => Setting::get('contact_name', ''),
+                'contact_email' => Setting::get('contact_email', ''),
+                'contact_phone' => Setting::get('contact_phone', ''),
+                'contact_address' => Setting::get('contact_address', ''),
+                'contact_description_pl' => Setting::get('contact_description_pl', ''),
+                'contact_description_en' => Setting::get('contact_description_en', ''),
+                'contact_photo' => Setting::get('contact_photo', ''),
+                'terms_pl' => Setting::get('terms_pl', ''),
+                'terms_en' => Setting::get('terms_en', ''),
             ],
             'properties' => $properties,
             'calendarSyncs' => $calendarSyncs,
             'emailTemplates' => $emailTemplates,
+            'widgets' => $widgets,
         ]);
     }
 
@@ -46,15 +59,37 @@ class SettingsController extends Controller
             'admin_email' => ['nullable', 'email'],
             'pre_arrival_days' => ['nullable', 'integer', 'min:1', 'max:30'],
             'post_stay_days' => ['nullable', 'integer', 'min:1', 'max:30'],
+            'contact_name' => ['nullable', 'string', 'max:255'],
+            'contact_email' => ['nullable', 'email'],
+            'contact_phone' => ['nullable', 'string', 'max:30'],
+            'contact_address' => ['nullable', 'string', 'max:500'],
+            'contact_description_pl' => ['nullable', 'string', 'max:2000'],
+            'contact_description_en' => ['nullable', 'string', 'max:2000'],
+            'terms_pl' => ['nullable', 'string', 'max:50000'],
+            'terms_en' => ['nullable', 'string', 'max:50000'],
         ]);
 
         foreach ($validated as $key => $value) {
-            if ($value !== null) {
-                Setting::set($key, (string) $value);
-            }
+            Setting::set($key, (string) ($value ?? ''));
         }
 
         return back()->with('success', 'Ustawienia zapisane.');
+    }
+
+    public function uploadContactPhoto(Request $request)
+    {
+        $request->validate(['photo' => ['required', 'image', 'max:2048']]);
+
+        // Delete old photo
+        $oldPath = Setting::get('contact_photo');
+        if ($oldPath) {
+            Storage::disk('public')->delete($oldPath);
+        }
+
+        $path = $request->file('photo')->store('contact', 'public');
+        Setting::set('contact_photo', $path);
+
+        return back()->with('success', 'Zdjecie zapisane.');
     }
 
     public function createCalendarSync(Request $request)
