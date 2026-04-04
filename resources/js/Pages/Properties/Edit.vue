@@ -35,6 +35,7 @@ const form = useForm({
     video_url: props.property.video_url || '',
     reservations_enabled: props.property.reservations_enabled ?? true,
     is_published: props.property.is_published ?? false,
+    sort_order: props.property.sort_order ?? 0,
     amenity_ids: props.property.amenities ? props.property.amenities.map(a => a.id) : [],
 });
 
@@ -500,6 +501,18 @@ const formatPrice = (grosze) => {
                                     {{ t('properties.isPublished') }}
                                 </span>
                             </label>
+                        </div>
+                        <div class="mt-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                {{ t('properties.sortOrder') }}
+                            </label>
+                            <input
+                                v-model.number="form.sort_order"
+                                type="number"
+                                min="0"
+                                class="mt-1 block w-24 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm px-3 py-2 border"
+                            />
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ t('properties.sortOrderHelp') }}</p>
                         </div>
                     </div>
 

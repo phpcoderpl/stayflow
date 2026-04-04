@@ -12,6 +12,7 @@ class Amenity extends Model
         'name_pl',
         'name_en',
         'icon',
+        'image_path',
         'category',
         'sort_order',
     ];

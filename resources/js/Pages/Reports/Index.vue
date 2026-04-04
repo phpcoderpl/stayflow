@@ -9,9 +9,12 @@ const { t, locale } = useI18n();
 const props = defineProps({
     year: Number,
     availableYears: Array,
+    properties: Array,
+    selectedPropertyId: [Number, String],
     monthlyRevenue: Object,
     monthlyBookings: Object,
     monthlyOccupancy: Object,
+    perPropertyData: Object,
     stats: Object,
 });
 
@@ -45,8 +48,23 @@ function bookingsBarHeight(month) {
 }
 
 function changeYear(event) {
-    router.get('/admin/reports', { year: event.target.value }, { preserveScroll: true });
+    router.get('/admin/reports', {
+        year: event.target.value,
+        property_id: props.selectedPropertyId || undefined
+    }, { preserveScroll: true });
 }
+
+function changeProperty(event) {
+    const propertyId = event.target.value === '' ? undefined : event.target.value;
+    router.get('/admin/reports', {
+        year: props.year,
+        property_id: propertyId
+    }, { preserveScroll: true });
+}
+
+const perPropertyArray = computed(() => {
+    return Object.values(props.perPropertyData || {});
+});
 
 const tableData = computed(() => {
     return Array.from({ length: 12 }, (_, i) => {
@@ -68,22 +86,40 @@ const tableData = computed(() => {
     <AdminLayout>
         <div class="p-4 sm:p-6 lg:p-8 space-y-6">
             <!-- Header -->
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between flex-wrap gap-4">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ $t('reports.title') }}</h1>
                     <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">{{ $t('reports.yearly_overview') }}</p>
                 </div>
 
-                <!-- Year selector -->
-                <div>
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">{{ $t('reports.year') }}:</label>
-                    <select
-                        :value="year"
-                        @change="changeYear"
-                        class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 dark:focus:ring-sky-400 focus:border-transparent"
-                    >
-                        <option v-for="y in availableYears" :key="y" :value="y">{{ y }}</option>
-                    </select>
+                <!-- Selectors -->
+                <div class="flex items-center gap-3">
+                    <!-- Property selector -->
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">{{ $t('reports.select_property') }}:</label>
+                        <select
+                            :value="selectedPropertyId || ''"
+                            @change="changeProperty"
+                            class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 dark:focus:ring-sky-400 focus:border-transparent"
+                        >
+                            <option value="">{{ $t('reports.all_properties') }}</option>
+                            <option v-for="property in properties" :key="property.id" :value="property.id">
+                                {{ property.name }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Year selector -->
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">{{ $t('reports.year') }}:</label>
+                        <select
+                            :value="year"
+                            @change="changeYear"
+                            class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 dark:focus:ring-sky-400 focus:border-transparent"
+                        >
+                            <option v-for="y in availableYears" :key="y" :value="y">{{ y }}</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -253,6 +289,33 @@ const tableData = computed(() => {
                         <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ stats.topProperty.name }}</p>
                         <p class="text-sm text-gray-500 dark:text-gray-400">{{ formatPLN(stats.topProperty.revenue) }} {{ $t('reports.in_revenue') }}</p>
                     </div>
+                </div>
+            </div>
+
+            <!-- Per-property breakdown (only when viewing all properties) -->
+            <div v-if="!selectedPropertyId && perPropertyArray.length > 0" class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $t('reports.per_property') }}</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-200 dark:border-gray-700">
+                                <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ $t('reports.property') }}</th>
+                                <th class="text-right px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ $t('reports.bookings') }}</th>
+                                <th class="text-right px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ $t('reports.revenue') }}</th>
+                                <th class="text-right px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ $t('reports.occupancy') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                            <tr v-for="property in perPropertyArray" :key="property.name" class="hover:bg-gray-50 dark:hover:bg-gray-750 transition">
+                                <td class="px-6 py-3 text-gray-900 dark:text-white font-medium">{{ property.name }}</td>
+                                <td class="px-6 py-3 text-right text-gray-600 dark:text-gray-400">{{ property.bookings }}</td>
+                                <td class="px-6 py-3 text-right text-gray-900 dark:text-white font-medium">{{ formatPLN(property.revenue) }}</td>
+                                <td class="px-6 py-3 text-right text-gray-600 dark:text-gray-400">{{ property.occupancy }}%</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

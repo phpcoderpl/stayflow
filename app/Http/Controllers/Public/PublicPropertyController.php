@@ -20,9 +20,34 @@ class PublicPropertyController extends Controller
             ->orderBy('sort_order')
             ->get();
 
+        $brandName = Setting::get('brand_name', 'StayFlow');
+
         return Inertia::render('Public/PropertyList', [
             'properties' => $properties,
-            'brandName' => Setting::get('brand_name', 'StayFlow'),
+            'brandName' => $brandName,
+            'listLayout' => Setting::get('property_list_layout', 'auto'),
+            'meta' => [
+                'title' => $brandName . ' — ' . ($properties->count() === 1 ? $properties->first()->name : 'Nasze obiekty'),
+                'description' => 'Zarezerwuj pobyt bezposrednio w ' . $brandName . '. Bez prowizji, bez posrednikow.',
+            ],
+            'schema' => [
+                '@context' => 'https://schema.org',
+                '@type' => 'ItemList',
+                'name' => $brandName,
+                'itemListElement' => $properties->map(fn($p, $i) => [
+                    '@type' => 'ListItem',
+                    'position' => $i + 1,
+                    'item' => [
+                        '@type' => 'LodgingBusiness',
+                        'name' => $p->name,
+                        'address' => [
+                            '@type' => 'PostalAddress',
+                            'addressLocality' => $p->city,
+                            'addressCountry' => 'PL',
+                        ],
+                    ],
+                ])->values()->toArray(),
+            ],
         ]);
     }
 

@@ -10,6 +10,7 @@ const props = defineProps({
     booking: { type: Object, required: true },
     depositPercent: { type: Number, default: 30 },
     brandName: { type: String, default: 'StayFlow' },
+    paymentProvider: { type: String, default: 'hotpay' },
 });
 
 function formatPrice(cents) {
@@ -48,12 +49,14 @@ const fullForm = useForm({
     payment_type: 'full',
 });
 
+const checkoutUrl = computed(() => `/${props.paymentProvider}/checkout`);
+
 function payDeposit() {
-    depositForm.post('/payu/checkout');
+    depositForm.post(checkoutUrl.value);
 }
 
 function payFull() {
-    fullForm.post('/payu/checkout');
+    fullForm.post(checkoutUrl.value);
 }
 </script>
 

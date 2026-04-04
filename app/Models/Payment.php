@@ -15,6 +15,7 @@ class Payment extends Model
         'type',
         'status',
         'payu_order_id',
+        'stripe_session_id',
         'ext_order_id',
         'paid_at',
         'notes',

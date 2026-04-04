@@ -116,6 +116,7 @@ class PublicBookingController extends Controller
         return Inertia::render('Public/BookingPayment', [
             'booking' => $booking,
             'depositPercent' => (int) Setting::get('deposit_percent', 30),
+            'paymentProvider' => config('stayflow.payment_provider', 'hotpay'),
         ]);
     }
 

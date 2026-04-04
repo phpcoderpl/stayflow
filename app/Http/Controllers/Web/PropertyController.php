@@ -16,9 +16,14 @@ class PropertyController extends Controller
     public function index()
     {
         $properties = Property::withCount(['bookings', 'photos'])
-            ->with('amenities')
+            ->with(['amenities', 'photos' => fn ($q) => $q->where('is_cover', true)->limit(1)])
             ->orderBy('sort_order')
-            ->get();
+            ->get()
+            ->each(function ($p) {
+                $cover = $p->photos->first();
+                $p->cover_photo_url = $cover ? '/storage/' . $cover->path : null;
+                unset($p->photos);
+            });
 
         return Inertia::render('Properties/Index', [
             'properties' => $properties,
@@ -131,6 +136,13 @@ class PropertyController extends Controller
         $amenityIds = $validated['amenity_ids'] ?? [];
         unset($validated['amenity_ids']);
 
+        // Ensure NOT NULL fields have defaults
+        $validated['postal_code'] = $validated['postal_code'] ?? '';
+        $validated['cleaning_fee'] = $validated['cleaning_fee'] ?? 0;
+        $validated['check_in_time'] = $validated['check_in_time'] ?? '15:00';
+        $validated['check_out_time'] = $validated['check_out_time'] ?? '11:00';
+        $validated['min_nights'] = $validated['min_nights'] ?? 1;
+
         $property->update($validated);
         $property->amenities()->sync($amenityIds);
 
@@ -192,5 +204,14 @@ class PropertyController extends Controller
         }
 
         return redirect()->back();
+    }
+
+    public function reorder(Request $request)
+    {
+        $validated = $request->validate(['order' => 'required|array', 'order.*' => 'integer']);
+        foreach ($validated['order'] as $index => $id) {
+            Property::where('id', $id)->update(['sort_order' => $index]);
+        }
+        return response()->json(['ok' => true]);
     }
 }

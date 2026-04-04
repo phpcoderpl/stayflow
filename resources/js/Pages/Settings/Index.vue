@@ -18,6 +18,7 @@ const activeTab = ref('general');
 
 const tabs = [
     { key: 'general', label: 'settings.tabs.general' },
+    { key: 'payments', label: 'settings.tabs.payments' },
     { key: 'contact', label: 'settings.tabs.contact' },
     { key: 'terms', label: 'settings.tabs.terms' },
     { key: 'integrations', label: 'settings.tabs.integrations' },
@@ -30,6 +31,7 @@ const tabs = [
 const generalForm = useForm({
     brand_name: props.settings.brand_name ?? '',
     brand_primary_color: props.settings.brand_primary_color ?? '#0ea5e9',
+    property_list_layout: props.settings.property_list_layout ?? 'auto',
     deposit_percent: props.settings.deposit_percent ?? 0,
     admin_email: props.settings.admin_email ?? '',
     google_analytics_id: props.settings.google_analytics_id ?? '',
@@ -43,7 +45,37 @@ const generalForm = useForm({
     contact_description_en: props.settings.contact_description_en ?? '',
     terms_pl: props.settings.terms_pl ?? '',
     terms_en: props.settings.terms_en ?? '',
+    mail_mailer: props.settings.mail_mailer ?? 'smtp',
+    mail_host: props.settings.mail_host ?? '',
+    mail_port: props.settings.mail_port ?? '587',
+    mail_username: props.settings.mail_username ?? '',
+    mail_password: props.settings.mail_password ?? '',
+    mail_encryption: props.settings.mail_encryption ?? 'tls',
+    mail_from_address: props.settings.mail_from_address ?? '',
+    mail_from_name: props.settings.mail_from_name ?? '',
 });
+
+// Payment settings form
+const paymentForm = useForm({
+    payment_provider: props.settings.payment_provider ?? 'stripe',
+    stripe_publishable_key: props.settings.stripe_publishable_key ?? '',
+    stripe_secret_key: props.settings.stripe_secret_key ?? '',
+    stripe_webhook_secret: props.settings.stripe_webhook_secret ?? '',
+    hotpay_secret: props.settings.hotpay_secret ?? '',
+    hotpay_notification_password: props.settings.hotpay_notification_password ?? '',
+    payu_pos_id: props.settings.payu_pos_id ?? '',
+    payu_client_secret: props.settings.payu_client_secret ?? '',
+    payu_second_key: props.settings.payu_second_key ?? '',
+    payu_sandbox: props.settings.payu_sandbox ?? '1',
+});
+
+function submitPayment() {
+    paymentForm.put('/admin/settings');
+}
+
+const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+const hotpayNotifyUrl = baseUrl + '/hotpay/notify';
+const stripeWebhookUrl = baseUrl + '/stripe/webhook';
 
 // Contact photo upload
 const contactPhotoUrl = ref(props.settings.contact_photo ? `/storage/${props.settings.contact_photo}` : null);
@@ -194,6 +226,19 @@ function getWidgetTypeName(type) {
                     </div>
 
                     <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.property_list_layout') }}</label>
+                        <select
+                            v-model="generalForm.property_list_layout"
+                            class="w-full max-w-xs px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500"
+                        >
+                            <option value="auto">{{ $t('settings.layout_auto') }}</option>
+                            <option value="1">{{ $t('settings.layout_1col') }}</option>
+                            <option value="2">{{ $t('settings.layout_2col') }}</option>
+                            <option value="3">{{ $t('settings.layout_3col') }}</option>
+                        </select>
+                    </div>
+
+                    <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.deposit_percent') }}</label>
                         <div class="relative max-w-xs">
                             <input
@@ -231,6 +276,153 @@ function getWidgetTypeName(type) {
                             {{ $t('settings.save') }}
                         </button>
                         <span v-if="generalForm.recentlySuccessful" class="ml-3 text-sm text-green-600 dark:text-green-400">{{ $t('settings.saved') }}</span>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Payments Tab -->
+            <div v-show="activeTab === 'payments'">
+                <form @submit.prevent="submitPayment" class="space-y-6 max-w-2xl">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.payment_provider') }}</label>
+                        <select
+                            v-model="paymentForm.payment_provider"
+                            class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                        >
+                            <option value="stripe">Stripe (BLIK + karty + Przelewy24)</option>
+                            <option value="hotpay">HotPay (BLIK + przelewy, bez firmy)</option>
+                            <option value="payu">PayU (wymaga firmy)</option>
+                        </select>
+                    </div>
+
+                    <!-- Stripe settings -->
+                    <template v-if="paymentForm.payment_provider === 'stripe'">
+                        <div class="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800">
+                            <p class="text-sm text-indigo-800 dark:text-indigo-300 mb-2 font-medium">Stripe</p>
+                            <p class="text-xs text-indigo-700 dark:text-indigo-400">{{ $t('settings.stripe_info') }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Publishable Key</label>
+                            <input
+                                v-model="paymentForm.stripe_publishable_key"
+                                type="text"
+                                placeholder="pk_live_..."
+                                class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Secret Key</label>
+                            <input
+                                v-model="paymentForm.stripe_secret_key"
+                                type="password"
+                                placeholder="sk_live_..."
+                                class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Webhook Secret</label>
+                            <input
+                                v-model="paymentForm.stripe_webhook_secret"
+                                type="password"
+                                placeholder="whsec_..."
+                                class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Webhook URL</label>
+                            <input
+                                :value="stripeWebhookUrl"
+                                type="text"
+                                readonly
+                                class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-500 dark:text-gray-400"
+                            />
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $t('settings.stripe_webhook_help') }}</p>
+                        </div>
+                    </template>
+
+                    <!-- HotPay settings -->
+                    <template v-if="paymentForm.payment_provider === 'hotpay'">
+                        <div class="p-4 bg-sky-50 dark:bg-sky-900/20 rounded-lg border border-sky-200 dark:border-sky-800">
+                            <p class="text-sm text-sky-800 dark:text-sky-300 mb-2 font-medium">HotPay</p>
+                            <p class="text-xs text-sky-700 dark:text-sky-400">{{ $t('settings.hotpay_info') }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.hotpay_secret') }}</label>
+                            <input
+                                v-model="paymentForm.hotpay_secret"
+                                type="text"
+                                class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.hotpay_notification_password') }}</label>
+                            <input
+                                v-model="paymentForm.hotpay_notification_password"
+                                type="text"
+                                class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.hotpay_notify_url') }}</label>
+                            <div class="flex items-center gap-2">
+                                <input
+                                    :value="hotpayNotifyUrl"
+                                    type="text"
+                                    readonly
+                                    class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-500 dark:text-gray-400"
+                                />
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $t('settings.hotpay_notify_url_help') }}</p>
+                        </div>
+                    </template>
+
+                    <!-- PayU settings -->
+                    <template v-if="paymentForm.payment_provider === 'payu'">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">PayU POS ID</label>
+                            <input
+                                v-model="paymentForm.payu_pos_id"
+                                type="text"
+                                class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Client Secret</label>
+                            <input
+                                v-model="paymentForm.payu_client_secret"
+                                type="password"
+                                class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Second Key</label>
+                            <input
+                                v-model="paymentForm.payu_second_key"
+                                type="password"
+                                class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                            />
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input
+                                v-model="paymentForm.payu_sandbox"
+                                type="checkbox"
+                                true-value="1"
+                                false-value="0"
+                                class="rounded border-gray-300 text-sky-600 focus:ring-sky-500"
+                            />
+                            <label class="text-sm text-gray-700 dark:text-gray-300">Sandbox (testowy)</label>
+                        </div>
+                    </template>
+
+                    <div class="pt-4">
+                        <button
+                            type="submit"
+                            :disabled="paymentForm.processing"
+                            class="inline-flex items-center px-5 py-2.5 rounded-lg bg-sky-500 hover:bg-sky-600 text-white text-sm font-medium transition disabled:opacity-50"
+                        >
+                            {{ $t('app.save') }}
+                        </button>
+                        <span v-if="paymentForm.recentlySuccessful" class="ml-3 text-sm text-green-600 dark:text-green-400">{{ $t('settings.saved') }}</span>
                     </div>
                 </form>
             </div>
@@ -473,6 +665,53 @@ function getWidgetTypeName(type) {
             <!-- Email Tab -->
             <div v-show="activeTab === 'email'">
                 <div class="max-w-4xl space-y-6">
+                    <!-- SMTP Configuration -->
+                    <form @submit.prevent="saveGeneral" class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                        <h3 class="text-md font-semibold text-gray-900 dark:text-white mb-4">{{ $t('settings.smtp_config') }}</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">{{ $t('settings.smtp_info') }}</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.mail_host') }}</label>
+                                <input v-model="generalForm.mail_host" type="text" placeholder="smtp.gmail.com" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 transition" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.mail_port') }}</label>
+                                <input v-model="generalForm.mail_port" type="text" placeholder="587" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 transition" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.mail_username') }}</label>
+                                <input v-model="generalForm.mail_username" type="text" placeholder="user@gmail.com" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 transition" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.mail_password') }}</label>
+                                <input v-model="generalForm.mail_password" type="password" placeholder="••••••••" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 transition" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.mail_encryption') }}</label>
+                                <select v-model="generalForm.mail_encryption" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 transition">
+                                    <option value="tls">TLS (port 587)</option>
+                                    <option value="ssl">SSL (port 465)</option>
+                                    <option value="">{{ $t('settings.none') }}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.mail_from_address') }}</label>
+                                <input v-model="generalForm.mail_from_address" type="email" placeholder="rezerwacje@twojadomena.pl" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 transition" />
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.mail_from_name') }}</label>
+                                <input v-model="generalForm.mail_from_name" type="text" placeholder="StayFlow Rezerwacje" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 transition" />
+                            </div>
+                        </div>
+                        <button
+                            type="submit"
+                            :disabled="generalForm.processing"
+                            class="inline-flex items-center px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-600 text-white text-sm font-medium transition disabled:opacity-50"
+                        >
+                            {{ $t('settings.save') }}
+                        </button>
+                    </form>
+
                     <!-- Pre/Post stay days -->
                     <form @submit.prevent="saveGeneral" class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
                         <h3 class="text-md font-semibold text-gray-900 dark:text-white mb-4">{{ $t('settings.stay_automation') }}</h3>

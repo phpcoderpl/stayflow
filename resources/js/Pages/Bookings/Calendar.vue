@@ -1,6 +1,6 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import { router } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import { ref, computed } from 'vue';
 
@@ -249,17 +249,18 @@ const isToday = (dateStr) => {
                             </div>
 
                             <!-- Booking indicators -->
-                            <div
+                            <Link
                                 v-for="booking in cell.bookings.slice(0, 3)"
                                 :key="booking.id"
+                                :href="`/admin/bookings/${booking.id}`"
                                 :class="[
-                                    'text-[10px] leading-tight px-1 py-0.5 rounded truncate mb-0.5',
+                                    'block text-[10px] leading-tight px-1 py-0.5 rounded truncate mb-0.5 hover:opacity-80',
                                     bookingBarClass(booking.status)
                                 ]"
                                 :title="booking.guest?.last_name + ' (' + booking.confirmation_code + ')'"
                             >
                                 {{ booking.guest?.last_name }}
-                            </div>
+                            </Link>
                             <div
                                 v-if="cell.bookings.length > 3"
                                 class="text-[10px] text-gray-400 dark:text-gray-500 px-1"

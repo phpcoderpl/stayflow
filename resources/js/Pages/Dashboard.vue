@@ -181,7 +181,7 @@ const statCards = computed(() => [
                     {{ $t('dashboard.new_booking') }}
                 </Link>
                 <Link
-                    href="/admin/calendar?mode=block"
+                    href="/admin/bookings/calendar?mode=block"
                     class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                 >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -190,7 +190,7 @@ const statCards = computed(() => [
                     {{ $t('dashboard.block_dates') }}
                 </Link>
                 <Link
-                    href="/admin/calendar"
+                    href="/admin/bookings/calendar"
                     class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                 >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">

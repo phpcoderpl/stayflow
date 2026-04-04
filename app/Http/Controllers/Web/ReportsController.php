@@ -14,10 +14,23 @@ class ReportsController extends Controller
     public function index(Request $request)
     {
         $year = $request->input('year', now()->year);
+        $propertyId = $request->input('property_id', null);
+
+        // Get all published properties
+        $properties = Property::where('is_published', true)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        // Base query for bookings
+        $baseQuery = Booking::whereRaw("strftime('%Y', check_in) = ?", [(string) $year])
+            ->whereIn('status', ['confirmed', 'completed', 'checked_in', 'checked_out']);
+
+        if ($propertyId) {
+            $baseQuery->where('property_id', $propertyId);
+        }
 
         // Get monthly revenue and booking counts
-        $monthlyData = Booking::whereRaw("strftime('%Y', check_in) = ?", [(string) $year])
-            ->whereIn('status', ['confirmed', 'completed', 'checked_in', 'checked_out'])
+        $monthlyData = (clone $baseQuery)
             ->select(
                 DB::raw("CAST(strftime('%m', check_in) AS INTEGER) as month"),
                 DB::raw('COUNT(*) as booking_count'),
@@ -39,7 +52,9 @@ class ReportsController extends Controller
         }
 
         // Calculate occupancy rate per month
-        $propertiesCount = Property::where('is_published', true)->count();
+        $propertiesCount = $propertyId
+            ? 1
+            : Property::where('is_published', true)->count();
         $monthlyOccupancy = [];
 
         for ($month = 1; $month <= 12; $month++) {
@@ -52,10 +67,15 @@ class ReportsController extends Controller
                 $monthStart = "$year-$monthPadded-01";
                 $monthEnd = date('Y-m-t', strtotime($monthStart));
 
-                $bookedNights = Booking::whereIn('status', ['confirmed', 'completed', 'checked_in', 'checked_out'])
+                $bookedNightsQuery = Booking::whereIn('status', ['confirmed', 'completed', 'checked_in', 'checked_out'])
                     ->where('check_out', '>', $monthStart)
-                    ->where('check_in', '<=', $monthEnd)
-                    ->sum('nights');
+                    ->where('check_in', '<=', $monthEnd);
+
+                if ($propertyId) {
+                    $bookedNightsQuery->where('property_id', $propertyId);
+                }
+
+                $bookedNights = $bookedNightsQuery->sum('nights');
 
                 $monthlyOccupancy[$month] = $totalAvailableNights > 0
                     ? round(($bookedNights / $totalAvailableNights) * 100, 1)
@@ -73,7 +93,7 @@ class ReportsController extends Controller
 
         // Top property by revenue
         $topProperty = null;
-        if (Property::count() > 1) {
+        if (!$propertyId && Property::count() > 1) {
             $topPropertyData = Booking::whereRaw("strftime('%Y', check_in) = ?", [(string) $year])
                 ->whereIn('status', ['confirmed', 'completed', 'checked_in', 'checked_out'])
                 ->select('property_id', DB::raw('SUM(total_price) as total_revenue'))
@@ -90,6 +110,43 @@ class ReportsController extends Controller
             }
         }
 
+        // Calculate per-property data (only when viewing all properties)
+        $perPropertyData = [];
+        if (!$propertyId) {
+            foreach ($properties as $property) {
+                $propertyBookings = Booking::whereRaw("strftime('%Y', check_in) = ?", [(string) $year])
+                    ->whereIn('status', ['confirmed', 'completed', 'checked_in', 'checked_out'])
+                    ->where('property_id', $property->id)
+                    ->selectRaw('COUNT(*) as booking_count, SUM(total_price) as revenue')
+                    ->first();
+
+                // Calculate occupancy for this property
+                $propertyOccupancy = 0;
+                $totalDaysInYear = date('L', strtotime("$year-01-01")) ? 366 : 365;
+                $totalAvailableNights = $totalDaysInYear;
+
+                $yearStart = "$year-01-01";
+                $yearEnd = "$year-12-31";
+
+                $bookedNights = Booking::whereIn('status', ['confirmed', 'completed', 'checked_in', 'checked_out'])
+                    ->where('property_id', $property->id)
+                    ->where('check_out', '>', $yearStart)
+                    ->where('check_in', '<=', $yearEnd)
+                    ->sum('nights');
+
+                $propertyOccupancy = $totalAvailableNights > 0
+                    ? round(($bookedNights / $totalAvailableNights) * 100, 1)
+                    : 0;
+
+                $perPropertyData[$property->id] = [
+                    'name' => $property->name,
+                    'bookings' => $propertyBookings ? (int) $propertyBookings->booking_count : 0,
+                    'revenue' => $propertyBookings ? (int) $propertyBookings->revenue : 0,
+                    'occupancy' => $propertyOccupancy,
+                ];
+            }
+        }
+
         // Available years (from first booking to current year)
         $firstBooking = Booking::orderBy('check_in')->first();
         $startYear = $firstBooking ? $firstBooking->check_in->year : now()->year;
@@ -98,9 +155,12 @@ class ReportsController extends Controller
         return Inertia::render('Reports/Index', [
             'year' => $year,
             'availableYears' => $availableYears,
+            'properties' => $properties,
+            'selectedPropertyId' => $propertyId,
             'monthlyRevenue' => $monthlyRevenue,
             'monthlyBookings' => $monthlyBookings,
             'monthlyOccupancy' => $monthlyOccupancy,
+            'perPropertyData' => $perPropertyData,
             'stats' => [
                 'totalRevenue' => $totalRevenue,
                 'totalBookings' => $totalBookings,

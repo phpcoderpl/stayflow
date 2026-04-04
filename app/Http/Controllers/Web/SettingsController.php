@@ -41,6 +41,14 @@ class SettingsController extends Controller
                 'contact_photo' => Setting::get('contact_photo', ''),
                 'terms_pl' => Setting::get('terms_pl', ''),
                 'terms_en' => Setting::get('terms_en', ''),
+                'mail_host' => Setting::get('mail_host', ''),
+                'mail_port' => Setting::get('mail_port', '587'),
+                'mail_username' => Setting::get('mail_username', ''),
+                'mail_password' => Setting::get('mail_password', '') ? '********' : '',
+                'mail_encryption' => Setting::get('mail_encryption', 'tls'),
+                'mail_from_address' => Setting::get('mail_from_address', ''),
+                'mail_from_name' => Setting::get('mail_from_name', ''),
+                'property_list_layout' => Setting::get('property_list_layout', 'auto'),
             ],
             'properties' => $properties,
             'calendarSyncs' => $calendarSyncs,
@@ -67,9 +75,21 @@ class SettingsController extends Controller
             'contact_description_en' => ['nullable', 'string', 'max:2000'],
             'terms_pl' => ['nullable', 'string', 'max:50000'],
             'terms_en' => ['nullable', 'string', 'max:50000'],
+            'property_list_layout' => ['nullable', 'string', 'in:auto,1,2,3'],
+            'mail_host' => ['nullable', 'string', 'max:255'],
+            'mail_port' => ['nullable', 'string', 'max:10'],
+            'mail_username' => ['nullable', 'string', 'max:255'],
+            'mail_password' => ['nullable', 'string', 'max:255'],
+            'mail_encryption' => ['nullable', 'string', 'in:tls,ssl,'],
+            'mail_from_address' => ['nullable', 'string', 'max:255'],
+            'mail_from_name' => ['nullable', 'string', 'max:255'],
         ]);
 
         foreach ($validated as $key => $value) {
+            // Don't overwrite password with mask
+            if ($key === 'mail_password' && $value === '********') {
+                continue;
+            }
             Setting::set($key, (string) ($value ?? ''));
         }
 

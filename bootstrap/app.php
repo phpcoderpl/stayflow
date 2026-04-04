@@ -14,7 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
         ]);
-        $middleware->validateCsrfTokens(except: ['payu/notify']);
+        $middleware->validateCsrfTokens(except: ['payu/notify', 'hotpay/notify', 'stripe/webhook']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

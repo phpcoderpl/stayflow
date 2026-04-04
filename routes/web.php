@@ -9,9 +9,12 @@ use App\Http\Controllers\Web\BlockedDateController;
 use App\Http\Controllers\Web\BookingController;
 use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\GuestController;
+use App\Http\Controllers\Web\HotPayController;
 use App\Http\Controllers\Web\ImportController;
+use App\Http\Controllers\Web\StripeController;
 use App\Http\Controllers\Web\PayUController;
 use App\Http\Controllers\Web\PropertyController;
+use App\Http\Controllers\Web\AmenityController;
 use App\Http\Controllers\Web\ReportsController;
 use App\Http\Controllers\Web\SeasonalPriceController;
 use App\Http\Controllers\Web\SettingsController;
@@ -50,9 +53,13 @@ Route::get('/booking/{confirmationCode}/confirmation', [PublicBookingController:
 // Guest portal (no auth)
 Route::get('/guest/{token}', [GuestPortalController::class, 'show']);
 
-// PayU (no auth, CSRF exempt for notify)
+// Payment providers (no auth, CSRF exempt for notify)
 Route::post('/payu/checkout', [PayUController::class, 'checkout']);
 Route::post('/payu/notify', [PayUController::class, 'notify']);
+Route::post('/hotpay/checkout', [HotPayController::class, 'checkout']);
+Route::post('/hotpay/notify', [HotPayController::class, 'notify']);
+Route::post('/stripe/checkout', [StripeController::class, 'checkout']);
+Route::post('/stripe/webhook', [StripeController::class, 'webhook']);
 
 // iCal feeds (no auth)
 Route::get('/ical/{token}.ics', [ICalController::class, 'export']);
@@ -72,6 +79,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
 
     Route::get('/properties', [PropertyController::class, 'index']);
+    Route::post('/properties/reorder', [PropertyController::class, 'reorder']);
     Route::get('/properties/create', [PropertyController::class, 'create']);
     Route::post('/properties', [PropertyController::class, 'store']);
     Route::get('/properties/{property}/edit', [PropertyController::class, 'edit']);
@@ -117,4 +125,11 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::delete('/widgets/{widget}', [WidgetController::class, 'destroy']);
 
     Route::get('/reports', [ReportsController::class, 'index']);
+
+    Route::get('/amenities', [AmenityController::class, 'index']);
+    Route::post('/amenities/reorder', [AmenityController::class, 'reorder']);
+    Route::post('/amenities', [AmenityController::class, 'store']);
+    Route::put('/amenities/{amenity}', [AmenityController::class, 'update']);
+    Route::delete('/amenities/{amenity}', [AmenityController::class, 'destroy']);
+    Route::delete('/amenities-category', [AmenityController::class, 'destroyCategory']);
 });
