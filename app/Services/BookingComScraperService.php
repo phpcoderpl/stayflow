@@ -373,8 +373,8 @@ class BookingComScraperService
             }
         }
 
-        // Booking.com CDN images (bstatic.com)
-        if (preg_match_all('/https?:\/\/cf\.bstatic\.com\/[^"\'\s<>]+\.(?:jpg|jpeg|png|webp)/i', $html, $matches)) {
+        // Booking.com CDN images (bstatic.com — multiple subdomains: cf, cf2, r-xx, etc.)
+        if (preg_match_all('/https?:\/\/[a-z0-9-]+\.bstatic\.com\/[^"\'\s<>]+\.(?:jpg|jpeg|png|webp)/i', $html, $matches)) {
             foreach ($matches[0] as $url) {
                 // Prefer larger versions — replace /max300/ or /square60/ with /max1024x768/
                 $url = preg_replace('/\/max\d+(?:x\d+)?\//', '/max1024x768/', $url);
@@ -383,7 +383,40 @@ class BookingComScraperService
             }
         }
 
-        return array_slice(array_unique($photos), 0, 20);
+        // Also try data-highres or highres attributes (Booking.com lazy-loaded images)
+        if (preg_match_all('/data-highres=["\']([^"\']+)["\']/', $html, $matches)) {
+            foreach ($matches[1] as $url) {
+                if (str_contains($url, 'bstatic.com') && !in_array($url, $photos)) {
+                    $photos[] = $url;
+                }
+            }
+        }
+
+        // Try extracting from JSON data blocks (Booking.com embeds photo data in JS objects)
+        if (preg_match_all('/"photoUri"\s*:\s*"(https?:[^"]+bstatic\.com[^"]+)"/i', $html, $matches)) {
+            foreach ($matches[1] as $url) {
+                $url = str_replace('\\/', '/', $url);
+                $url = preg_replace('/\/max\d+(?:x\d+)?\//', '/max1024x768/', $url);
+                $url = preg_replace('/\/square\d+\//', '/max1024x768/', $url);
+                if (!in_array($url, $photos)) $photos[] = $url;
+            }
+        }
+
+        // Also check for hotel_photos or photo_url patterns in inline JS/JSON
+        if (preg_match_all('/"(?:url|photo_url|large_url|url_original|url_max1024x768)"\s*:\s*"(https?:[^"]+bstatic\.com[^"]+)"/i', $html, $matches)) {
+            foreach ($matches[1] as $url) {
+                $url = str_replace('\\/', '/', $url);
+                if (!in_array($url, $photos)) $photos[] = $url;
+            }
+        }
+
+        // Filter out tiny images (icons, logos, avatars) — keep only property photos
+        $photos = array_values(array_filter($photos, function ($url) {
+            // Skip square/tiny thumbnails, review photos, flags, icons
+            return !preg_match('/\/(square\d+|max\d{1,2}x|avatars|flags|static\/img)\//i', $url);
+        }));
+
+        return array_slice(array_unique($photos), 0, 30);
     }
 
     /**

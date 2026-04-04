@@ -214,7 +214,7 @@ class ImportController extends Controller
                 $isFirst = false;
 
                 // Limit to 20 photos
-                if ($sortOrder >= 20) {
+                if ($sortOrder >= 30) {
                     break;
                 }
             } catch (\Exception $e) {
