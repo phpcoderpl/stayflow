@@ -9,8 +9,9 @@ cmds = [
 
 [phases.build]
 cmds = [
-    "npm run build"
+    "npm run build",
+    "mkdir -p /var/data",
+    "touch /var/data/database.sqlite",
+    "php artisan migrate --force",
+    "php artisan db:seed --force"
 ]
-
-[start]
-cmd = "touch /var/data/database.sqlite && php artisan migrate --force && php artisan db:seed --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
