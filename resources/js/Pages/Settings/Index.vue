@@ -100,10 +100,15 @@ function saveGeneral() {
 const syncForm = useForm({
     property_id: '',
     provider: 'ical',
+    direction: 'import',
     ical_url: '',
 });
 
 function addSync() {
+    // Clear URL for export (backend determines direction from URL presence)
+    if (syncForm.direction === 'export') {
+        syncForm.ical_url = '';
+    }
     syncForm.post('/admin/settings/calendar-sync', {
         onSuccess: () => syncForm.reset(),
     });
@@ -559,6 +564,21 @@ function getWidgetTypeName(type) {
             <!-- Integrations Tab -->
             <div v-show="activeTab === 'integrations'">
                 <div class="max-w-4xl space-y-8">
+                    <!-- How it works -->
+                    <div class="bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 rounded-lg p-4">
+                        <h3 class="text-sm font-semibold text-sky-800 dark:text-sky-300 mb-2">{{ $t('settings.sync_how_title') }}</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-sky-700 dark:text-sky-400">
+                            <div>
+                                <p class="font-semibold mb-1">{{ $t('settings.sync_import_title') }}</p>
+                                <p>{{ $t('settings.sync_import_desc') }}</p>
+                            </div>
+                            <div>
+                                <p class="font-semibold mb-1">{{ $t('settings.sync_export_title') }}</p>
+                                <p>{{ $t('settings.sync_export_desc') }}</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Existing syncs -->
                     <div>
                         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $t('settings.ical_syncs') }}</h2>
@@ -574,25 +594,39 @@ function getWidgetTypeName(type) {
                                 class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4"
                             >
                                 <div class="flex flex-wrap items-start justify-between gap-3">
-                                    <div class="space-y-1 min-w-0 flex-1">
+                                    <div class="space-y-1.5 min-w-0 flex-1">
                                         <div class="flex items-center gap-2">
                                             <span class="text-sm font-medium text-gray-900 dark:text-white">{{ sync.property?.name || $t('settings.unknown_property') }}</span>
                                             <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300">
-                                                {{ sync.provider }}
+                                                {{ sync.provider === 'booking_com' ? 'Booking.com' : sync.provider === 'google' ? 'Google' : 'iCal' }}
                                             </span>
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
-                                                {{ sync.direction }}
+                                            <span :class="[
+                                                'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium',
+                                                sync.direction === 'import'
+                                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                                                    : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
+                                            ]">
+                                                {{ sync.direction === 'import' ? $t('settings.sync_dir_import') : $t('settings.sync_dir_export') }}
                                             </span>
                                         </div>
-                                        <p v-if="sync.ical_url" class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ sync.ical_url }}</p>
-                                        <div v-if="sync.ical_export_token" class="flex items-center gap-2 mt-1">
-                                            <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ exportUrl(sync.ical_export_token) }}</p>
-                                            <button
-                                                @click="copyExportUrl(sync.ical_export_token)"
-                                                class="shrink-0 text-xs text-sky-600 dark:text-sky-400 hover:underline"
-                                            >
-                                                {{ $t('settings.copy_url') }}
-                                            </button>
+                                        <!-- Import: show source URL -->
+                                        <div v-if="sync.direction === 'import' && sync.ical_url" class="text-xs text-gray-500 dark:text-gray-400">
+                                            <span class="font-medium">{{ $t('settings.sync_source') }}:</span>
+                                            <span class="ml-1 truncate">{{ sync.ical_url }}</span>
+                                        </div>
+                                        <!-- Export: show generated URL with copy -->
+                                        <div v-if="sync.direction === 'export' && sync.ical_export_token" class="space-y-1">
+                                            <p class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ $t('settings.sync_your_link') }}:</p>
+                                            <div class="flex items-center gap-2 bg-gray-50 dark:bg-gray-900 rounded px-2 py-1.5">
+                                                <code class="text-xs text-gray-700 dark:text-gray-300 truncate flex-1">{{ exportUrl(sync.ical_export_token) }}</code>
+                                                <button
+                                                    @click="copyExportUrl(sync.ical_export_token)"
+                                                    class="shrink-0 text-xs font-medium text-sky-600 dark:text-sky-400 hover:underline"
+                                                >
+                                                    {{ $t('settings.copy_url') }}
+                                                </button>
+                                            </div>
+                                            <p class="text-xs text-gray-400 dark:text-gray-500">{{ $t('settings.sync_export_hint') }}</p>
                                         </div>
                                         <p v-if="sync.last_synced_at" class="text-xs text-gray-400 dark:text-gray-500">
                                             {{ $t('settings.last_synced') }}: {{ sync.last_synced_at }}
@@ -601,6 +635,7 @@ function getWidgetTypeName(type) {
                                     <button
                                         @click="deleteSync(sync.id)"
                                         class="shrink-0 p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
+                                        :title="$t('app.delete')"
                                     >
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
@@ -615,12 +650,30 @@ function getWidgetTypeName(type) {
                     <div>
                         <h3 class="text-md font-semibold text-gray-900 dark:text-white mb-3">{{ $t('settings.add_sync') }}</h3>
                         <form @submit.prevent="addSync" class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-4">
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <!-- Direction choice -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ $t('settings.sync_direction') }}</label>
+                                <div class="flex gap-3">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" v-model="syncForm.direction" value="import" class="text-sky-500 focus:ring-sky-500" />
+                                        <span class="text-sm text-gray-700 dark:text-gray-300">{{ $t('settings.sync_dir_import') }}</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" v-model="syncForm.direction" value="export" class="text-sky-500 focus:ring-sky-500" />
+                                        <span class="text-sm text-gray-700 dark:text-gray-300">{{ $t('settings.sync_dir_export') }}</span>
+                                    </label>
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    {{ syncForm.direction === 'import' ? $t('settings.sync_import_help') : $t('settings.sync_export_help') }}
+                                </p>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.property') }}</label>
                                     <select
                                         v-model="syncForm.property_id"
-                                        class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                                        class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 transition"
                                     >
                                         <option value="">{{ $t('settings.select_property') }}</option>
                                         <option v-for="prop in properties" :key="prop.id" :value="prop.id">{{ prop.name }}</option>
@@ -631,7 +684,7 @@ function getWidgetTypeName(type) {
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.provider') }}</label>
                                     <select
                                         v-model="syncForm.provider"
-                                        class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                                        class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 transition"
                                     >
                                         <option value="ical">iCal</option>
                                         <option value="booking_com">Booking.com</option>
@@ -639,17 +692,25 @@ function getWidgetTypeName(type) {
                                     </select>
                                     <p v-if="syncForm.errors.provider" class="mt-1 text-sm text-red-500">{{ syncForm.errors.provider }}</p>
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.ical_url') }}</label>
-                                    <input
-                                        v-model="syncForm.ical_url"
-                                        type="url"
-                                        placeholder="https://..."
-                                        class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
-                                    />
-                                    <p v-if="syncForm.errors.ical_url" class="mt-1 text-sm text-red-500">{{ syncForm.errors.ical_url }}</p>
-                                </div>
                             </div>
+
+                            <!-- URL field only for import -->
+                            <div v-if="syncForm.direction === 'import'">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.ical_url') }}</label>
+                                <input
+                                    v-model="syncForm.ical_url"
+                                    type="url"
+                                    placeholder="https://admin.booking.com/hotel/.../ical/..."
+                                    class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 transition"
+                                />
+                                <p v-if="syncForm.errors.ical_url" class="mt-1 text-sm text-red-500">{{ syncForm.errors.ical_url }}</p>
+                            </div>
+
+                            <!-- Info for export -->
+                            <div v-if="syncForm.direction === 'export'" class="bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
+                                <p class="text-xs text-gray-600 dark:text-gray-400">{{ $t('settings.sync_export_create_info') }}</p>
+                            </div>
+
                             <button
                                 type="submit"
                                 :disabled="syncForm.processing"

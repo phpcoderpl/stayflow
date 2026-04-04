@@ -19,6 +19,7 @@ const selectedPropertyFilter = ref(props.selectedPropertyId || '');
 // Block date modal
 const showBlockModal = ref(false);
 const blockForm = ref({
+    property_id: '',
     date_from: '',
     date_to: '',
     reason: '',
@@ -135,6 +136,7 @@ function bookingBarClass(status) {
 }
 
 function openBlockModal(dateStr) {
+    blockForm.value.property_id = selectedPropertyFilter.value || (props.properties.length === 1 ? props.properties[0].id : '');
     blockForm.value.date_from = dateStr;
     blockForm.value.date_to = dateStr;
     blockForm.value.reason = '';
@@ -142,10 +144,7 @@ function openBlockModal(dateStr) {
 }
 
 function submitBlock() {
-    router.post('/admin/blocked-dates', {
-        ...blockForm.value,
-        property_id: selectedPropertyFilter.value || null,
-    }, {
+    router.post('/admin/blocked-dates', blockForm.value, {
         preserveState: true,
         onSuccess: () => {
             showBlockModal.value = false;
@@ -282,6 +281,18 @@ const isToday = (dateStr) => {
                     <div class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                {{ t('settings.property') }}
+                            </label>
+                            <select
+                                v-model="blockForm.property_id"
+                                class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm px-3 py-2 border"
+                            >
+                                <option value="">{{ t('settings.select_property') }}</option>
+                                <option v-for="p in properties" :key="p.id" :value="p.id">{{ p.name }}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 {{ t('bookings.dateFrom') }}
                             </label>
                             <input
@@ -320,7 +331,8 @@ const isToday = (dateStr) => {
                         </button>
                         <button
                             @click="submitBlock"
-                            class="bg-sky-600 hover:bg-sky-700 text-white rounded-lg px-4 py-2 text-sm font-medium"
+                            :disabled="!blockForm.property_id"
+                            class="bg-sky-600 hover:bg-sky-700 text-white rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {{ t('bookings.blockSave') }}
                         </button>

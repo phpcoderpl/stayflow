@@ -434,7 +434,21 @@
         "contact_description_placeholder": "Krotki opis o sobie, doswiadczeniu, itp.",
         "terms_pl": "Regulamin (PL)",
         "terms_en": "Regulamin (EN)",
-        "terms_info": "Regulamin bedzie widoczny publicznie na stronie /terms. Mozesz uzyc zwyklego tekstu."
+        "terms_info": "Regulamin bedzie widoczny publicznie na stronie /terms. Mozesz uzyc zwyklego tekstu.",
+        "sync_how_title": "Jak dziala synchronizacja kalendarzy?",
+        "sync_import_title": "Import (pobieranie)",
+        "sync_import_desc": "System pobiera daty z zewnetrznego zrodla (np. Booking.com, Airbnb) i blokuje je w StayFlow. Podajesz URL kanalu iCal.",
+        "sync_export_title": "Eksport (udostepnianie)",
+        "sync_export_desc": "System generuje link iCal z rezerwacjami StayFlow. Wklejasz go w Booking.com/Google Calendar aby zsynchronizowac terminy.",
+        "sync_direction": "Kierunek",
+        "sync_dir_import": "Import (pobierz z zewnatrz)",
+        "sync_dir_export": "Eksport (udostepnij na zewnatrz)",
+        "sync_import_help": "Podaj URL kanalu iCal z Booking.com, Airbnb lub innego zrodla.",
+        "sync_export_help": "Po utworzeniu otrzymasz link iCal do wklejenia w zewnetrznym serwisie.",
+        "sync_export_create_info": "Link eksportu zostanie wygenerowany po utworzeniu synchronizacji.",
+        "sync_source": "Zrodlo",
+        "sync_your_link": "Twoj link iCal",
+        "sync_export_hint": "Skopiuj ten link i wklej w panelu Booking.com, Airbnb lub Google Calendar."
     },
     "seasonal": {
         "title": "Ceny sezonowe",
