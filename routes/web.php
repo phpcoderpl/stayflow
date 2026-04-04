@@ -11,6 +11,9 @@ use App\Http\Controllers\Web\GuestController;
 use App\Http\Controllers\Web\PayUController;
 use App\Http\Controllers\Web\PropertyController;
 use App\Http\Controllers\Web\SeasonalPriceController;
+use App\Http\Controllers\Web\SettingsController;
+use App\Http\Controllers\Api\AvailabilityController;
+use App\Http\Controllers\Api\ICalController;
 use Illuminate\Support\Facades\Route;
 
 // Guest routes
@@ -43,6 +46,13 @@ Route::get('/guest/{token}', [GuestPortalController::class, 'show']);
 Route::post('/payu/checkout', [PayUController::class, 'checkout']);
 Route::post('/payu/notify', [PayUController::class, 'notify']);
 
+// iCal feeds (no auth)
+Route::get('/ical/{token}.ics', [ICalController::class, 'export']);
+Route::get('/booking/{confirmationCode}/calendar.ics', [ICalController::class, 'guestIcs']);
+
+// Public API
+Route::get('/api/properties/{propertyId}/availability', [AvailabilityController::class, 'index']);
+
 // Admin routes
 Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
@@ -74,4 +84,10 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 
     Route::post('/blocked-dates', [BlockedDateController::class, 'store']);
     Route::delete('/blocked-dates/{blockedDate}', [BlockedDateController::class, 'destroy']);
+
+    Route::get('/settings', [SettingsController::class, 'index']);
+    Route::put('/settings', [SettingsController::class, 'update']);
+    Route::post('/settings/calendar-sync', [SettingsController::class, 'createCalendarSync']);
+    Route::delete('/settings/calendar-sync/{calendarSync}', [SettingsController::class, 'deleteCalendarSync']);
+    Route::put('/settings/email-templates/{emailTemplate}', [SettingsController::class, 'updateEmailTemplate']);
 });
