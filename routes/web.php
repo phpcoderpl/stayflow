@@ -1,7 +1,10 @@
 <?php
 
 use App\Http\Controllers\Web\AuthController;
+use App\Http\Controllers\Web\BlockedDateController;
+use App\Http\Controllers\Web\BookingController;
 use App\Http\Controllers\Web\DashboardController;
+use App\Http\Controllers\Web\GuestController;
 use App\Http\Controllers\Web\PropertyController;
 use App\Http\Controllers\Web\SeasonalPriceController;
 use Illuminate\Support\Facades\Route;
@@ -37,4 +40,17 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 
     Route::post('/properties/{property}/seasonal-prices', [SeasonalPriceController::class, 'store']);
     Route::delete('/properties/{property}/seasonal-prices/{seasonalPrice}', [SeasonalPriceController::class, 'destroy']);
+
+    Route::get('/bookings', [BookingController::class, 'index']);
+    Route::get('/bookings/calendar', [BookingController::class, 'calendar']);
+    Route::get('/bookings/create', [BookingController::class, 'create']);
+    Route::post('/bookings', [BookingController::class, 'store']);
+    Route::get('/bookings/{booking}', [BookingController::class, 'show']);
+    Route::patch('/bookings/{booking}/status', [BookingController::class, 'updateStatus']);
+
+    Route::get('/guests', [GuestController::class, 'index']);
+    Route::get('/guests/{guest}', [GuestController::class, 'show']);
+
+    Route::post('/blocked-dates', [BlockedDateController::class, 'store']);
+    Route::delete('/blocked-dates/{blockedDate}', [BlockedDateController::class, 'destroy']);
 });
